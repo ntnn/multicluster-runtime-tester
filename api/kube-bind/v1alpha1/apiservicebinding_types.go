@@ -25,18 +25,52 @@ import (
 
 // APIServiceBindingSpec defines the desired state of APIServiceBinding.
 type APIServiceBindingSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of APIServiceBinding. Edit apiservicebinding_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	KubeconfigSecretRef SecretRef                `json:"kubeconfigSecretRef"`
+	PermissionClaims    []BindingPermissionClaim `json:"permissionClaims"`
 }
+
+type SecretRef struct {
+	Key       string `json:"key"`
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
+type BindingPermissionClaim struct {
+	PermissionClaim `json:""`
+	Status          AcceptanceStatus `json:"status"`
+}
+
+type AcceptanceStatus string
+
+const (
+	AcceptancePending AcceptanceStatus = "Pending"
+	Declined          AcceptanceStatus = "Declined"
+	Valid             AcceptanceStatus = "Valid"
+	Accepted          AcceptanceStatus = "Accepted"
+)
 
 // APIServiceBindingStatus defines the observed state of APIServiceBinding.
 type APIServiceBindingStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	BoundResources   []BindingResourceRef     `json:"boundResources"`
+	PermissionClaims []BindingPermissionClaim `json:"permissionClaims"`
+	Conditions       []metav1.Condition       `json:"conditions"`
 }
+
+type BindingResourceRef struct {
+	Group    string `json:"group"`
+	Resource string `json:"resource"`
+}
+
+type APIServiceBindingStatusType string
+
+const (
+	BindingPending  APIServiceBindingStatusType = "Pending"
+	SecretValid     APIServiceBindingStatusType = "SecretValid"
+	InformersSynced APIServiceBindingStatusType = "InformersSynced"
+	Heartbeating    APIServiceBindingStatusType = "Heartbeating"
+	Connected       APIServiceBindingStatusType = "Connected"
+	Ready           APIServiceBindingStatusType = "Ready"
+)
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
