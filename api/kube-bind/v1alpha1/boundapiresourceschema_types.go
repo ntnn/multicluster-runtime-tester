@@ -1,5 +1,5 @@
 /*
-Copyright 2025.
+Copyright 2025 The Kube Bind Authors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,45 +20,77 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
-// BoundAPIResourceSchemaSpec defines the desired state of BoundAPIResourceSchema.
-type BoundAPIResourceSchemaSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of BoundAPIResourceSchema. Edit boundapiresourceschema_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
-}
-
-// BoundAPIResourceSchemaStatus defines the observed state of BoundAPIResourceSchema.
-type BoundAPIResourceSchemaStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-}
-
-// +kubebuilder:object:root=true
+// BoundAPIResourceSchema
+// +crd
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:resource:scope=Namespaced,categories=kube-bindings
 // +kubebuilder:subresource:status
-
-// BoundAPIResourceSchema is the Schema for the boundapiresourceschemas API.
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type BoundAPIResourceSchema struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BoundAPIResourceSchemaSpec   `json:"spec,omitempty"`
+	Spec   BoundAPIResourceSchemaSpec   `json:"spec"`
 	Status BoundAPIResourceSchemaStatus `json:"status,omitempty"`
 }
 
-// +kubebuilder:object:root=true
+// BoundAPIResourceSchemaSpec defines the desired state of the BoundAPIResourceSchema.
+type BoundAPIResourceSchemaSpec struct {
+	// InformerScope indicates whether the informer for defined custom resource is cluster- or namespace-scoped.
+	// Allowed values are `Cluster` and `Namespaced`.
+	//
+	// +required
+	// +kubebuilder:validation:Enum=Cluster;Namespaced
+	InformerScope InformerScope `json:"informerScope"`
 
-// BoundAPIResourceSchemaList contains a list of BoundAPIResourceSchema.
-type BoundAPIResourceSchemaList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []BoundAPIResourceSchema `json:"items"`
+	APIResourceSchemaCRDSpec `json:",inline"`
 }
 
-func init() {
-	SchemeBuilder.Register(&BoundAPIResourceSchema{}, &BoundAPIResourceSchemaList{})
+// BoundAPIResourceSchemaConditionType is type of BoundAPIResourceSchemaCondition
+// +kubebuilder:validation:Enum=Valid;Invalid
+type BoundAPIResourceSchemaConditionType string
+
+const (
+	// BoundAPIResourceSchemaReady indicates that the API resource schema is ready.
+	// It is set to true when the API resource schema is accepted and there are no drifts detected.
+	BoundAPIResourceSchemaValid BoundAPIResourceSchemaConditionType = "Valid"
+	// BoundAPIResourceSchemaDriftDetected indicates that there is a drift between the consumer's API and the expected API.
+	// It is set to true when the API resource schema is not accepted or there are drifts detected.
+	BoundAPIResourceSchemaInvalid BoundAPIResourceSchemaConditionType = "Invalid"
+)
+
+// BoundAPIResourceSchemaConditionReason is the set of reasons for specific condition type.
+// +kubebuilder:validation:Enum=Accepted;Rejected;Pending;DriftDetected
+type BoundAPIResourceSchemaConditionReason string
+
+const (
+	// BoundAPIResourceSchemaAccepted indicates that the API resource schema is accepted.
+	BoundAPIResourceSchemaAccepted BoundAPIResourceSchemaConditionReason = "Accepted"
+	// BoundAPIResourceSchemaRejected indicates that the API resource schema is rejected.
+	BoundAPIResourceSchemaRejected BoundAPIResourceSchemaConditionReason = "Rejected"
+	// BoundAPIResourceSchemaPending indicates that the API resource schema is pending.
+	BoundAPIResourceSchemaPending BoundAPIResourceSchemaConditionReason = "Pending"
+	// BoundAPIResourceSchemaDriftDetected indicates that there is a drift between the consumer's API and the expected API.
+	BoundAPIResourceSchemaDriftDetected BoundAPIResourceSchemaConditionReason = "DriftDetected"
+)
+
+// BoundAPIResourceSchemaStatus defines the observed state of the BoundAPIResourceSchema.
+type BoundAPIResourceSchemaStatus struct {
+	// Conditions represent the latest available observations of the object's state.
+	// +optional
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
+
+	// Instantiations tracks the number of instances of the resource on the consumer side.
+	// +optional
+	Instantiations int `json:"instantiations,omitempty"`
+}
+
+// BoundAPIResourceSchemaList is a list of BoundAPIResourceSchemas.
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+type BoundAPIResourceSchemaList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []BoundAPIResourceSchema `json:"items"`
 }
