@@ -20,16 +20,48 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // APIServiceExportSpec defines the desired state of APIServiceExport.
 type APIServiceExportSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	Resources        []ResourceRef     `json:"resources,omitempty"`
+	PermissionClaims []PermissionClaim `json:"permissionClaims"`
+}
 
-	// Foo is an example field of APIServiceExport. Edit apiserviceexport_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+type ResourceRef struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+type PermissionClaim struct {
+	Group            string             `json:"group"`
+	Resource         string             `json:"resource"`
+	Policy           Policy             `json:"policy"`
+	ResourceSelector []ResourceSelector `json:"resourceSelector"`
+}
+
+type Policy struct {
+	Provider PermissionClaimPolicy `json:"provider"`
+	Consumer PermissionClaimPolicy `json:"consumer"`
+}
+
+type PermissionClaimPolicy struct {
+	// TODO enums?
+	Sync   string `json:"sync"`
+	Delete string `json:"delete"`
+}
+
+type ResourceSelector struct {
+	Group     string                      `json:"group"`
+	Resource  string                      `json:"resource"`
+	Policy    Policy                      `json:"policy"`
+	Selectors []ResourceSelectorReference `json:"selectors"`
+}
+
+type ResourceSelectorReference struct {
+	Resource string   `json:"resource"`
+	Group    string   `json:"group"`
+	Type     string   `json:"type"`
+	JSONPath string   `json:"jsonpath"`
+	Verbs    []string `json:"verbs"`
 }
 
 // APIServiceExportStatus defines the observed state of APIServiceExport.

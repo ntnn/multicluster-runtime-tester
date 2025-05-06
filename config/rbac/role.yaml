@@ -5,6 +5,32 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - kube-bind.ntnn.github.io
+  resources:
+  - apiserviceexports
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - kube-bind.ntnn.github.io
+  resources:
+  - apiserviceexports/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - kube-bind.ntnn.github.io
+  resources:
+  - apiserviceexports/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
   - service.ntnn.github.io
   resources:
   - whoamis
