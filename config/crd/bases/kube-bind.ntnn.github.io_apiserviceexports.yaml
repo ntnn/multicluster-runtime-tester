@@ -106,7 +106,27 @@ spec:
                           resource:
                             type: string
                           selectors:
-                            items: {}
+                            items:
+                              properties:
+                                group:
+                                  type: string
+                                jsonpath:
+                                  type: string
+                                resource:
+                                  type: string
+                                type:
+                                  type: string
+                                verbs:
+                                  items:
+                                    type: string
+                                  type: array
+                              required:
+                              - group
+                              - jsonpath
+                              - resource
+                              - type
+                              - verbs
+                              type: object
                             type: array
                         required:
                         - group
