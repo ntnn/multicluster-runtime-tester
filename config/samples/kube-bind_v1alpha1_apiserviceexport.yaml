@@ -1,0 +1,9 @@
+apiVersion: kube-bind.ntnn.github.io/v1alpha1
+kind: APIServiceExport
+metadata:
+  labels:
+    app.kubernetes.io/name: multicluster-runtime-tester
+    app.kubernetes.io/managed-by: kustomize
+  name: apiserviceexport-sample
+spec:
+  # TODO(user): Add fields here

@@ -37,7 +37,9 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	kubebindv1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/kube-bind/v1alpha1"
 	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
+	kubebindcontroller "github.com/ntnn/multicluster-runtime-tester/internal/controller/kube-bind"
 	servicev1alpha1ctrl "github.com/ntnn/multicluster-runtime-tester/internal/controller/service"
 	// +kubebuilder:scaffold:imports
 )
@@ -51,6 +53,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(servicev1alpha1.AddToScheme(scheme))
+	utilruntime.Must(kubebindv1alpha1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 
@@ -207,6 +210,13 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Whoami")
+		os.Exit(1)
+	}
+	if err = (&kubebindcontroller.APIServiceExportReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExport")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

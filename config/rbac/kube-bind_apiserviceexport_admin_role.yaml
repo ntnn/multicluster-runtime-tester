@@ -1,0 +1,27 @@
+# This rule is not used by the project multicluster-runtime-tester itself.
+# It is provided to allow the cluster admin to help manage permissions for users.
+#
+# Grants full permissions ('*') over kube-bind.ntnn.github.io.
+# This role is intended for users authorized to modify roles and bindings within the cluster,
+# enabling them to delegate specific permissions to other users or groups as needed.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: multicluster-runtime-tester
+    app.kubernetes.io/managed-by: kustomize
+  name: kube-bind-apiserviceexport-admin-role
+rules:
+- apiGroups:
+  - kube-bind.ntnn.github.io
+  resources:
+  - apiserviceexports
+  verbs:
+  - '*'
+- apiGroups:
+  - kube-bind.ntnn.github.io
+  resources:
+  - apiserviceexports/status
+  verbs:
+  - get
