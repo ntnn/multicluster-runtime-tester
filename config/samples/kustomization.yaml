@@ -2,4 +2,5 @@
 resources:
 - service_v1alpha1_whoami.yaml
 - kube-bind_v1alpha1_apiserviceexport.yaml
+- kube-bind_v1alpha1_apiresourceschema.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
