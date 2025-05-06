@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- service_v1alpha1_whoami.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

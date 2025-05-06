@@ -1,0 +1,9 @@
+apiVersion: service.ntnn.github.io/v1alpha1
+kind: Whoami
+metadata:
+  labels:
+    app.kubernetes.io/name: multicluster-runtime-tester
+    app.kubernetes.io/managed-by: kustomize
+  name: whoami-sample
+spec:
+  # TODO(user): Add fields here
