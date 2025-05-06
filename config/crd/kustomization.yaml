@@ -7,6 +7,7 @@ resources:
 - bases/kube-bind.ntnn.github.io_apiresourceschemas.yaml
 - bases/kube-bind.ntnn.github.io_boundapiresourceschemas.yaml
 - bases/kube-bind.ntnn.github.io_apiserviceexportrequests.yaml
+- bases/kube-bind.ntnn.github.io_apiservicebindings.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

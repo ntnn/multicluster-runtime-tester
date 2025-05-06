@@ -5,4 +5,5 @@ resources:
 - kube-bind_v1alpha1_apiresourceschema.yaml
 - kube-bind_v1alpha1_boundapiresourceschema.yaml
 - kube-bind_v1alpha1_apiserviceexportrequest.yaml
+- kube-bind_v1alpha1_apiservicebinding.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
