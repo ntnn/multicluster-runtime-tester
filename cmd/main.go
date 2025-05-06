@@ -37,6 +37,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	mctrl "sigs.k8s.io/multicluster-runtime"
+
 	kubebindv1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/kube-bind/v1alpha1"
 	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
 	kubebindcontroller "github.com/ntnn/multicluster-runtime-tester/internal/controller/kube-bind"
@@ -181,7 +183,10 @@ func main() {
 		})
 	}
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+	var provider mctrl.Provider
+	// TODO
+
+	mgr, err := mctrl.NewManager(mctrl.GetConfigOrDie(), provider, ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
