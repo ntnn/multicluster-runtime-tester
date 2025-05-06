@@ -8,6 +8,7 @@ rules:
   - kube-bind.ntnn.github.io
   resources:
   - apiresourceschemas
+  - apiservicebindings
   - apiserviceexportrequests
   - apiserviceexports
   - boundapiresourceschemas
@@ -23,6 +24,7 @@ rules:
   - kube-bind.ntnn.github.io
   resources:
   - apiresourceschemas/finalizers
+  - apiservicebindings/finalizers
   - apiserviceexportrequests/finalizers
   - apiserviceexports/finalizers
   - boundapiresourceschemas/finalizers
@@ -32,6 +34,7 @@ rules:
   - kube-bind.ntnn.github.io
   resources:
   - apiresourceschemas/status
+  - apiservicebindings/status
   - apiserviceexportrequests/status
   - apiserviceexports/status
   - boundapiresourceschemas/status
