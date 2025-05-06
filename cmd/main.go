@@ -37,8 +37,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/v1alpha1"
-	"github.com/ntnn/multicluster-runtime-tester/internal/controller"
+	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
+	servicev1alpha1ctrl "github.com/ntnn/multicluster-runtime-tester/internal/controller/service"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -202,7 +202,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controller.WhoamiReconciler{
+	if err = (&servicev1alpha1ctrl.WhoamiReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package service
 
 import (
 	"context"
@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/v1alpha1"
+	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
 )
 
 // WhoamiReconciler reconciles a Whoami object

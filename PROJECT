@@ -5,6 +5,7 @@
 domain: ntnn.github.io
 layout:
 - go.kubebuilder.io/v4
+multigroup: true
 projectName: multicluster-runtime-tester
 repo: github.com/ntnn/multicluster-runtime-tester
 resources:
