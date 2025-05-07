@@ -40,6 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	mctrl "sigs.k8s.io/multicluster-runtime"
+	multicluster "sigs.k8s.io/multicluster-runtime/pkg/multicluster"
 
 	kubebindv1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/kube-bind/v1alpha1"
 	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
@@ -191,7 +192,7 @@ func doMain() error {
 		})
 	}
 
-	var provider mctrl.Provider
+	var provider multicluster.Provider
 
 	mgr, err := mctrl.NewManager(mctrl.GetConfigOrDie(), provider, ctrl.Options{
 		Scheme:                 scheme,
