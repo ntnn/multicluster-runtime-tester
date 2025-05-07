@@ -61,6 +61,12 @@ func init() {
 
 // nolint:gocyclo
 func main() {
+	if err := doMain(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func doMain() error {
 	var metricsAddr string
 	var metricsCertPath, metricsCertName, metricsCertKey string
 	var webhookCertPath, webhookCertName, webhookCertKey string
@@ -126,7 +132,7 @@ func main() {
 		)
 		if err != nil {
 			setupLog.Error(err, "Failed to initialize webhook certificate watcher")
-			os.Exit(1)
+			return err
 		}
 
 		webhookTLSOpts = append(webhookTLSOpts, func(config *tls.Config) {
@@ -175,7 +181,7 @@ func main() {
 		)
 		if err != nil {
 			setupLog.Error(err, "to initialize metrics certificate watcher", "error", err)
-			os.Exit(1)
+			return err
 		}
 
 		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, func(config *tls.Config) {
@@ -207,7 +213,7 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+		return err
 	}
 
 	if err = (&servicev1alpha1ctrl.WhoamiReconciler{
@@ -215,42 +221,42 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Whoami")
-		os.Exit(1)
+		return err
 	}
 	if err = (&kubebindcontroller.APIServiceExportReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExport")
-		os.Exit(1)
+		return err
 	}
 	if err = (&kubebindcontroller.APIResourceSchemaReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIResourceSchema")
-		os.Exit(1)
+		return err
 	}
 	if err = (&kubebindcontroller.BoundAPIResourceSchemaReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "BoundAPIResourceSchema")
-		os.Exit(1)
+		return err
 	}
 	if err = (&kubebindcontroller.APIServiceExportRequestReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExportRequest")
-		os.Exit(1)
+		return err
 	}
 	if err = (&kubebindcontroller.APIServiceBindingReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceBinding")
-		os.Exit(1)
+		return err
 	}
 	// +kubebuilder:scaffold:builder
 
@@ -258,7 +264,7 @@ func main() {
 		setupLog.Info("Adding metrics certificate watcher to manager")
 		if err := mgr.Add(metricsCertWatcher); err != nil {
 			setupLog.Error(err, "unable to add metrics certificate watcher to manager")
-			os.Exit(1)
+			return err
 		}
 	}
 
@@ -266,22 +272,22 @@ func main() {
 		setupLog.Info("Adding webhook certificate watcher to manager")
 		if err := mgr.Add(webhookCertWatcher); err != nil {
 			setupLog.Error(err, "unable to add webhook certificate watcher to manager")
-			os.Exit(1)
+			return err
 		}
 	}
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+		return err
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+		return err
 	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+		return err
 	}
 }
