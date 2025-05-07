@@ -218,45 +218,27 @@ func doMain() error {
 		return err
 	}
 
-	if err = (&servicev1alpha1ctrl.WhoamiReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&servicev1alpha1ctrl.WhoamiReconciler{}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Whoami")
 		return err
 	}
-	if err = (&kubebindcontroller.APIServiceExportReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIServiceExportReconciler{}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExport")
 		return err
 	}
-	if err = (&kubebindcontroller.APIResourceSchemaReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIResourceSchemaReconciler{}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIResourceSchema")
 		return err
 	}
-	if err = (&kubebindcontroller.BoundAPIResourceSchemaReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.BoundAPIResourceSchemaReconciler{}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "BoundAPIResourceSchema")
 		return err
 	}
-	if err = (&kubebindcontroller.APIServiceExportRequestReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIServiceExportRequestReconciler{}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExportRequest")
 		return err
 	}
-	if err = (&kubebindcontroller.APIServiceBindingReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIServiceBindingReconciler{}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceBinding")
 		return err
 	}

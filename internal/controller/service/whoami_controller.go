@@ -19,18 +19,15 @@ package service
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	mctrl "sigs.k8s.io/multicluster-runtime"
 
 	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
 )
 
 // WhoamiReconciler reconciles a Whoami object
 type WhoamiReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
 }
 
 // +kubebuilder:rbac:groups=service.ntnn.github.io,resources=whoamis,verbs=get;list;watch;create;update;patch;delete
@@ -46,17 +43,17 @@ type WhoamiReconciler struct {
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.4/pkg/reconcile
-func (r *WhoamiReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *WhoamiReconciler) Reconcile(ctx context.Context, req mctrl.Request) (mctrl.Result, error) {
 	_ = logf.FromContext(ctx)
 
 	// TODO(user): your logic here
 
-	return ctrl.Result{}, nil
+	return mctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *WhoamiReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
+func (r *WhoamiReconciler) SetupWithManager(mgr mctrl.Manager) error {
+	return mctrl.NewControllerManagedBy(mgr).
 		For(&servicev1alpha1.Whoami{}).
 		Named("whoami").
 		Complete(r)
