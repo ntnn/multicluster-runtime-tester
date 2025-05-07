@@ -17,10 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
-	"os"
+	"log"
 	"path/filepath"
+	"sync"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -190,7 +192,6 @@ func doMain() error {
 	}
 
 	var provider mctrl.Provider
-	// TODO
 
 	mgr, err := mctrl.NewManager(mctrl.GetConfigOrDie(), provider, ctrl.Options{
 		Scheme:                 scheme,
@@ -285,9 +286,31 @@ func doMain() error {
 		return err
 	}
 
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		return err
-	}
+	ctx, cancel := context.WithCancel(ctrl.SetupSignalHandler())
+	defer cancel()
+
+	wg := &sync.WaitGroup{}
+
+	// wg.Add(1)
+	// go func() {
+	// 	defer wg.Done()
+	// 	defer cancel()
+	// 	setupLog.Info("starting multicluster-runtime kind provider")
+	// 	if err := provider.Run(ctx, mgr); err != nil {
+	// 		setupLog.Error(err, "error running multicluster-runtime provider")
+	// 	}
+	// }()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		defer cancel()
+		setupLog.Info("starting manager")
+		if err := mgr.Start(ctx); err != nil {
+			setupLog.Error(err, "problem running manager")
+		}
+	}()
+
+	wg.Wait()
+	return nil
 }
