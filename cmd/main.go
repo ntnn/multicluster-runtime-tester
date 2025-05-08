@@ -224,14 +224,17 @@ func doMain() error {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExport")
 		return err
 	}
-	if err = (&kubebindcontroller.APIResourceSchemaReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIResourceSchema")
-		return err
-	}
-	if err = (&kubebindcontroller.BoundAPIResourceSchemaReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "BoundAPIResourceSchema")
-		return err
-	}
+	// if err
+	// = (&kubebindcontroller.APIResourceSchemaReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "APIResourceSchema")
+	// 	return err
+	// }
+	// if err
+	// = (&kubebindcontroller.BoundAPIResourceSchemaReconciler{Manager:
+	// mgr}).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "BoundAPIResourceSchema")
+	// 	return err
+	// }
 	if err = (&kubebindcontroller.APIServiceExportRequestReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExportRequest")
 		return err
