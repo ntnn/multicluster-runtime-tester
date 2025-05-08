@@ -224,6 +224,10 @@ func doMain() error {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExportRequest")
 		return err
 	}
+	// if err = (&kubebindcontroller.APIServiceExportReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "APIServiceExport")
+	// 	return err
+	// }
 	// if err
 	// = (&kubebindcontroller.APIResourceSchemaReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 	// 	setupLog.Error(err, "unable to create controller", "controller", "APIResourceSchema")
@@ -235,14 +239,10 @@ func doMain() error {
 	// 	setupLog.Error(err, "unable to create controller", "controller", "BoundAPIResourceSchema")
 	// 	return err
 	// }
-	if err = (&kubebindcontroller.APIServiceExportRequestReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExportRequest")
-		return err
-	}
-	if err = (&kubebindcontroller.APIServiceBindingReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIServiceBinding")
-		return err
-	}
+	// if err = (&kubebindcontroller.APIServiceBindingReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "APIServiceBinding")
+	// 	return err
+	// }
 	// +kubebuilder:scaffold:builder
 
 	// TODO multicluster certwatcher?
