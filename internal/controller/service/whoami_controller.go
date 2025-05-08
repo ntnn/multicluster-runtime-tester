@@ -22,7 +22,6 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -31,51 +30,50 @@ import (
 	mctrl "sigs.k8s.io/multicluster-runtime"
 
 	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
-)
 
-// WhoamiReconciler reconciles a Whoami object
-type WhoamiReconciler struct {
-	Manager mctrl.Manager
-}
+	"github.com/ntnn/multicluster-runtime-tester/pkg/reconciler"
+)
 
 // +kubebuilder:rbac:groups=service.ntnn.github.io,resources=whoamis,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=service.ntnn.github.io,resources=whoamis/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=service.ntnn.github.io,resources=whoamis/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Whoami object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.4/pkg/reconcile
-func (r *WhoamiReconciler) Reconcile(ctx context.Context, req mctrl.Request) (mctrl.Result, error) {
-	log := logf.FromContext(ctx).WithValues("cluster", req.ClusterName, "namespace", req.Namespace, "name", req.Name)
-	log.Info("Reconciling Whoami")
-
-	cluster, err := r.Manager.GetCluster(ctx, req.ClusterName)
-	if err != nil {
-		return mctrl.Result{}, err
+// WhoamiReconciler reconciles a Whoami object
+func NewWhoamiReconciler() *reconciler.Reconciler[*servicev1alpha1.Whoami] {
+	r := reconciler.NewReconciler[*servicev1alpha1.Whoami]("whoami")
+	r.GetObject = func() *servicev1alpha1.Whoami {
+		return &servicev1alpha1.Whoami{}
 	}
-
-	cl := cluster.GetClient()
-
-	whoami := &servicev1alpha1.Whoami{}
-	if err := cl.Get(ctx, req.NamespacedName, whoami); err != nil {
-		if apierrors.IsNotFound(err) {
-			return mctrl.Result{}, DeleteWhoami(ctx, cl, req)
+	r.Ensure = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*servicev1alpha1.Whoami]) error {
+		log := logf.FromContext(ctx)
+		log.Info("Creating Whoami")
+		var errs error
+		for _, obj := range GenWhoamiResources(rCtx.Request) {
+			if err := r.Upsert(ctx, rCtx.Client, obj); err != nil {
+				log.Error(err, "Failed to upsert Whoami resource", "resource", obj)
+				errs = errors.Join(errs, err)
+			}
 		}
-		return mctrl.Result{}, err
+		return errs
 	}
+	r.Delete = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*servicev1alpha1.Whoami]) error {
+		log := logf.FromContext(ctx)
+		log.Info("Deleting Whoami")
 
-	if err := EnsureWhoami(ctx, cl, req); err != nil {
-		log.Error(err, "Failed to ensure Whoami resources")
-		return mctrl.Result{}, err
+		var errs error
+		for _, resource := range usedResourceTypes {
+			if err := rCtx.Client.DeleteAllOf(ctx, resource,
+				client.InNamespace(rCtx.Request.Namespace),
+				client.MatchingLabels{"whoami": rCtx.Request.Name},
+			); err != nil {
+				log.Error(err, "Failed to delete Whoami resources", "resource", resource)
+				err = errors.Join(errs, err)
+			}
+		}
+		return errs
+
 	}
-
-	return mctrl.Result{}, nil
+	return r
 }
 
 var usedResourceTypes = []client.Object{
@@ -134,54 +132,4 @@ func GenWhoamiResources(req mctrl.Request) []client.Object {
 			},
 		},
 	}
-}
-
-func EnsureWhoami(ctx context.Context, cl client.Client, req mctrl.Request) error {
-	log := logf.FromContext(ctx)
-	log.Info("Creating Whoami")
-
-	var errs error
-	for _, resource := range GenWhoamiResources(req) {
-		log.Info("Creating Whoami resource", "resource", resource)
-
-		if err := cl.Get(ctx, client.ObjectKeyFromObject(resource), resource); err != nil {
-			// Resource doesn't exist, create it
-			if err := cl.Create(ctx, resource); err != nil {
-				log.Error(err, "Failed to create Whoami resource", "resource", resource)
-				err = errors.Join(errs, err)
-			}
-		} else {
-			// Resource exists, update it
-			if err := cl.Update(ctx, resource); err != nil {
-				log.Error(err, "Failed to update Whoami resource", "resource", resource)
-				err = errors.Join(errs, err)
-			}
-		}
-	}
-	return errs
-}
-
-func DeleteWhoami(ctx context.Context, cl client.Client, req mctrl.Request) error {
-	log := logf.FromContext(ctx)
-	log.Info("Deleting Whoami")
-
-	var errs error
-	for _, resource := range usedResourceTypes {
-		if err := cl.DeleteAllOf(ctx, resource,
-			client.InNamespace(req.Namespace),
-			client.MatchingLabels{"whoami": req.Name},
-		); err != nil {
-			log.Error(err, "Failed to delete Whoami resources", "resource", resource)
-			err = errors.Join(errs, err)
-		}
-	}
-	return errs
-}
-
-// SetupWithManager sets up the controller with the Manager.
-func (r *WhoamiReconciler) SetupWithManager(mgr mctrl.Manager) error {
-	return mctrl.NewControllerManagedBy(mgr).
-		For(&servicev1alpha1.Whoami{}).
-		Named("whoami").
-		Complete(r)
 }

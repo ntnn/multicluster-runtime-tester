@@ -216,7 +216,7 @@ func doMain() error {
 		return err
 	}
 
-	if err = (&servicecontroller.WhoamiReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
+	if err := servicecontroller.NewWhoamiReconciler().SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Whoami")
 		return err
 	}
