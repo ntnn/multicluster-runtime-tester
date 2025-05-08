@@ -1,4 +1,30 @@
 # multicluster-runtime-tester
+
+A test controller for multicluster-runtime
+
+```sh
+kind create cluster
+```
+
+```sh
+make manifests generate fmt vet install
+```
+
+```sh
+make run
+```
+
+```sh
+kubecl apply -f testdata/whoami.yaml
+```
+
+```sh
+kubecl apply -f testdata/kubebind.yaml
+```
+
+# template
+
+# multicluster-runtime-tester
 // TODO(user): Add simple overview of use/purpose
 
 ## Description
