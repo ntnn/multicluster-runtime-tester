@@ -22,6 +22,7 @@ import (
 
 // APIServiceExportSpec defines the desired state of APIServiceExport.
 type APIServiceExportSpec struct {
+	// TODO Consumer instead of Target would be more apt
 	Target           ExportTarget      `json:"target"`
 	Resources        []ResourceRef     `json:"resources,omitempty"`
 	PermissionClaims []PermissionClaim `json:"permissionClaims,omitempty"`
@@ -33,6 +34,15 @@ type ExportTarget struct {
 	// multicluster-runtime for now. This ofc does not work in e.g.
 	// a multi-cluster multi-controller environment, where each
 	// controller might have their own abstract name for a cluster.
+	//
+	// During the setup (when APIServiceExportRequest is created) the
+	// creator should take care of any RBAC and service accounts
+	// required and place kubeconfigs in the source and/or target
+	// clusters for the controller(s) to use.
+	// The APIServiceExportRequest could list the cluster names
+	// accordingly.
+
+	// TODO Rename to ClusterName
 
 	Cluster   string `json:"cluster"`
 	Namespace string `json:"namespace"`
