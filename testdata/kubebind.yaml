@@ -1,0 +1,65 @@
+apiVersion: kube-bind.ntnn.github.io/v1alpha1
+kind: APIResourceSchema
+metadata:
+  name: whitelabel.other.corp
+  namespace: provider-namespace
+spec:
+  informerScope: Namespaced
+  # APIResourceSchemaCRDSpec
+  group: whoami.ntnn.github.io
+  names:
+    kind: Whoami
+    listKind: WhoamiList
+    plural: whoamis
+    singular: whoami
+  scope: Namespaced
+  versions:
+  - name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Whoami is the Schema for the whoamis API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: WhoamiSpec defines the desired state of Whoami.
+            type: object
+          status:
+            description: WhoamiStatus defines the observed state of Whoami.
+            properties:
+              url:
+                minLength: 1
+                type: string
+            required:
+            - url
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: kube-bind.ntnn.github.io/v1alpha1
+kind: APIServiceExportRequest
+metadata:
+  name: customer0-whoami0
+  namespace: provider-namespace
+spec:
+  resources:
+    - name: whitelabel.other.corp
+      type: APIResourceSchema

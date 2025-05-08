@@ -1,0 +1,6 @@
+apiVersion: service.ntnn.github.io/v1alpha1
+kind: Whoami
+metadata:
+  name: whoami
+  namespace: default
+spec: {}
