@@ -36,7 +36,7 @@ type SecretRef struct {
 }
 
 type BindingPermissionClaim struct {
-	PermissionClaim `json:""`
+	PermissionClaim `json:",inline"`
 	Status          AcceptanceStatus `json:"status"`
 }
 
