@@ -41,109 +41,6 @@ spec:
             description: APIServiceExportRequestSpec defines the desired state of
               APIServiceExportRequest.
             properties:
-              permissionClaims:
-                items:
-                  properties:
-                    group:
-                      type: string
-                    policy:
-                      properties:
-                        consumer:
-                          properties:
-                            delete:
-                              type: string
-                            sync:
-                              type: string
-                          required:
-                          - delete
-                          - sync
-                          type: object
-                        provider:
-                          properties:
-                            delete:
-                              type: string
-                            sync:
-                              type: string
-                          required:
-                          - delete
-                          - sync
-                          type: object
-                      required:
-                      - consumer
-                      - provider
-                      type: object
-                    resource:
-                      type: string
-                    resourceSelector:
-                      items:
-                        properties:
-                          group:
-                            type: string
-                          policy:
-                            properties:
-                              consumer:
-                                properties:
-                                  delete:
-                                    type: string
-                                  sync:
-                                    type: string
-                                required:
-                                - delete
-                                - sync
-                                type: object
-                              provider:
-                                properties:
-                                  delete:
-                                    type: string
-                                  sync:
-                                    type: string
-                                required:
-                                - delete
-                                - sync
-                                type: object
-                            required:
-                            - consumer
-                            - provider
-                            type: object
-                          resource:
-                            type: string
-                          selectors:
-                            items:
-                              properties:
-                                group:
-                                  type: string
-                                jsonpath:
-                                  type: string
-                                resource:
-                                  type: string
-                                type:
-                                  type: string
-                                verbs:
-                                  items:
-                                    type: string
-                                  type: array
-                              required:
-                              - group
-                              - jsonpath
-                              - resource
-                              - type
-                              - verbs
-                              type: object
-                            type: array
-                        required:
-                        - group
-                        - policy
-                        - resource
-                        - selectors
-                        type: object
-                      type: array
-                  required:
-                  - group
-                  - policy
-                  - resource
-                  - resourceSelector
-                  type: object
-                type: array
               resources:
                 items:
                   properties:
@@ -156,8 +53,6 @@ spec:
                   - type
                   type: object
                 type: array
-            required:
-            - permissionClaims
             type: object
           status:
             description: APIServiceExportRequestStatus defines the observed state

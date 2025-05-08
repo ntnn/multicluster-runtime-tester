@@ -154,8 +154,18 @@ spec:
                   - type
                   type: object
                 type: array
+              target:
+                properties:
+                  cluster:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - cluster
+                - namespace
+                type: object
             required:
-            - permissionClaims
+            - target
             type: object
           status:
             description: APIServiceExportStatus defines the observed state of APIServiceExport.

@@ -22,8 +22,20 @@ import (
 
 // APIServiceExportSpec defines the desired state of APIServiceExport.
 type APIServiceExportSpec struct {
+	Target           ExportTarget      `json:"target"`
 	Resources        []ResourceRef     `json:"resources,omitempty"`
-	PermissionClaims []PermissionClaim `json:"permissionClaims"`
+	PermissionClaims []PermissionClaim `json:"permissionClaims,omitempty"`
+}
+
+type ExportTarget struct {
+
+	// TODO cluster is just the name of the cluster in
+	// multicluster-runtime for now. This ofc does not work in e.g.
+	// a multi-cluster multi-controller environment, where each
+	// controller might have their own abstract name for a cluster.
+
+	Cluster   string `json:"cluster"`
+	Namespace string `json:"namespace"`
 }
 
 type ResourceRef struct {

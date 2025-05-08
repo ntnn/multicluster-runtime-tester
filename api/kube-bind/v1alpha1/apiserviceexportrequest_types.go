@@ -22,8 +22,8 @@ import (
 
 // APIServiceExportRequestSpec defines the desired state of APIServiceExportRequest.
 type APIServiceExportRequestSpec struct {
-	Resources        []ResourceRef     `json:"resources,omitempty"`
-	PermissionClaims []PermissionClaim `json:"permissionClaims"`
+	Resources []ResourceRef `json:"resources,omitempty"`
+	// PermissionClaims []PermissionClaim `json:"permissionClaims"`
 }
 
 // APIServiceExportRequestStatus defines the observed state of APIServiceExportRequest.

@@ -25,8 +25,8 @@ import (
 
 // APIServiceBindingSpec defines the desired state of APIServiceBinding.
 type APIServiceBindingSpec struct {
-	KubeconfigSecretRef SecretRef                `json:"kubeconfigSecretRef"`
-	PermissionClaims    []BindingPermissionClaim `json:"permissionClaims"`
+	// KubeconfigSecretRef SecretRef                `json:"kubeconfigSecretRef"`
+	// PermissionClaims []BindingPermissionClaim `json:"permissionClaims"`
 }
 
 type SecretRef struct {
