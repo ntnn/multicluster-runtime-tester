@@ -43,7 +43,7 @@ import (
 	kubebindv1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/kube-bind/v1alpha1"
 	servicev1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/service/v1alpha1"
 	kubebindcontroller "github.com/ntnn/multicluster-runtime-tester/internal/controller/kube-bind"
-	servicev1alpha1ctrl "github.com/ntnn/multicluster-runtime-tester/internal/controller/service"
+	servicecontroller "github.com/ntnn/multicluster-runtime-tester/internal/controller/service"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -216,7 +216,7 @@ func doMain() error {
 		return err
 	}
 
-	if err = (&servicev1alpha1ctrl.WhoamiReconciler{}).SetupWithManager(mgr); err != nil {
+	if err = (&servicecontroller.WhoamiReconciler{}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Whoami")
 		return err
 	}
