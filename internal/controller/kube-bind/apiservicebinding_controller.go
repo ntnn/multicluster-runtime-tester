@@ -28,6 +28,7 @@ import (
 
 // APIServiceBindingReconciler reconciles a APIServiceBinding object
 type APIServiceBindingReconciler struct {
+	Manager mctrl.Manager
 }
 
 // +kubebuilder:rbac:groups=kube-bind.ntnn.github.io,resources=apiservicebindings,verbs=get;list;watch;create;update;patch;delete

@@ -28,6 +28,7 @@ import (
 
 // WhoamiReconciler reconciles a Whoami object
 type WhoamiReconciler struct {
+	Manager mctrl.Manager
 }
 
 // +kubebuilder:rbac:groups=service.ntnn.github.io,resources=whoamis,verbs=get;list;watch;create;update;patch;delete

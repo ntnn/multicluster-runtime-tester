@@ -216,27 +216,27 @@ func doMain() error {
 		return err
 	}
 
-	if err = (&servicecontroller.WhoamiReconciler{}).SetupWithManager(mgr); err != nil {
+	if err = (&servicecontroller.WhoamiReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Whoami")
 		return err
 	}
-	if err = (&kubebindcontroller.APIServiceExportReconciler{}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIServiceExportReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExport")
 		return err
 	}
-	if err = (&kubebindcontroller.APIResourceSchemaReconciler{}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIResourceSchemaReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIResourceSchema")
 		return err
 	}
-	if err = (&kubebindcontroller.BoundAPIResourceSchemaReconciler{}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.BoundAPIResourceSchemaReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "BoundAPIResourceSchema")
 		return err
 	}
-	if err = (&kubebindcontroller.APIServiceExportRequestReconciler{}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIServiceExportRequestReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExportRequest")
 		return err
 	}
-	if err = (&kubebindcontroller.APIServiceBindingReconciler{}).SetupWithManager(mgr); err != nil {
+	if err = (&kubebindcontroller.APIServiceBindingReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "APIServiceBinding")
 		return err
 	}

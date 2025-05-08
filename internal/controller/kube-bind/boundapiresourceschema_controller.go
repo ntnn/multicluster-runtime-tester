@@ -28,6 +28,7 @@ import (
 
 // BoundAPIResourceSchemaReconciler reconciles a BoundAPIResourceSchema object
 type BoundAPIResourceSchemaReconciler struct {
+	Manager mctrl.Manager
 }
 
 // +kubebuilder:rbac:groups=kube-bind.ntnn.github.io,resources=boundapiresourceschemas,verbs=get;list;watch;create;update;patch;delete

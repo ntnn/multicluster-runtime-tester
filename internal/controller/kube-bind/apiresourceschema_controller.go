@@ -28,6 +28,7 @@ import (
 
 // APIResourceSchemaReconciler reconciles a APIResourceSchema object
 type APIResourceSchemaReconciler struct {
+	Manager mctrl.Manager
 }
 
 // +kubebuilder:rbac:groups=kube-bind.ntnn.github.io,resources=apiresourceschemas,verbs=get;list;watch;create;update;patch;delete

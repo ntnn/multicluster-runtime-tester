@@ -28,6 +28,7 @@ import (
 
 // APIServiceExportRequestReconciler reconciles a APIServiceExportRequest object
 type APIServiceExportRequestReconciler struct {
+	Manager mctrl.Manager
 }
 
 // +kubebuilder:rbac:groups=kube-bind.ntnn.github.io,resources=apiserviceexportrequests,verbs=get;list;watch;create;update;patch;delete
