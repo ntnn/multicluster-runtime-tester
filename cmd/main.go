@@ -220,8 +220,8 @@ func doMain() error {
 		setupLog.Error(err, "unable to create controller", "controller", "Whoami")
 		return err
 	}
-	if err = (&kubebindcontroller.APIServiceExportReconciler{Manager: mgr}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExport")
+	if err := kubebindcontroller.NewAPIServiceExportRequestReconciler().SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "APIServiceExportRequest")
 		return err
 	}
 	// if err

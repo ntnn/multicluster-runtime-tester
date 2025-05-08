@@ -19,43 +19,65 @@ package kubebind
 import (
 	"context"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	mctrl "sigs.k8s.io/multicluster-runtime"
-
 	kubebindv1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/kube-bind/v1alpha1"
+	"github.com/ntnn/multicluster-runtime-tester/pkg/reconciler"
 )
-
-// APIServiceExportRequestReconciler reconciles a APIServiceExportRequest object
-type APIServiceExportRequestReconciler struct {
-	Manager mctrl.Manager
-}
 
 // +kubebuilder:rbac:groups=kube-bind.ntnn.github.io,resources=apiserviceexportrequests,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=kube-bind.ntnn.github.io,resources=apiserviceexportrequests/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=kube-bind.ntnn.github.io,resources=apiserviceexportrequests/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the APIServiceExportRequest object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.4/pkg/reconcile
-func (r *APIServiceExportRequestReconciler) Reconcile(ctx context.Context, req mctrl.Request) (mctrl.Result, error) {
-	_ = logf.FromContext(ctx)
+func NewAPIServiceExportRequestReconciler() *reconciler.Reconciler[*kubebindv1alpha1.APIServiceExportRequest] {
+	r := reconciler.NewReconciler[*kubebindv1alpha1.APIServiceExportRequest]("api-service-export-request")
+	r.GetObject = func() *kubebindv1alpha1.APIServiceExportRequest {
+		return &kubebindv1alpha1.APIServiceExportRequest{}
+	}
+	r.Ensure = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) error {
+		log := logf.FromContext(ctx)
+		log.Info("Ensuring APIServiceExport")
 
-	// TODO(user): your logic here
+		obj := &kubebindv1alpha1.APIServiceExport{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: rCtx.Request.Name,
+				// TODO should be the provider namespace, though
+				// I believe the APIServiceExportRequest should be on
+				// the consumer side
+				Namespace: rCtx.Request.Namespace,
+			},
+			Spec: kubebindv1alpha1.APIServiceExportSpec{
+				Target: kubebindv1alpha1.ExportTarget{
+					Cluster:   rCtx.Request.ClusterName,
+					Namespace: rCtx.Request.Namespace,
+				},
+				Resources: rCtx.Object.Spec.Resources,
+			},
+		}
 
-	return mctrl.Result{}, nil
-}
+		// TODO if consumer and provider are on different clusters need
+		// a way to get the cluster from the ExportRequest and store it in the
+		// Export?
+		return r.Upsert(ctx, rCtx.Client, obj)
+	}
+	r.Delete = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) error {
+		log := logf.FromContext(ctx)
+		log.Info("Deleting APIServiceExport")
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *APIServiceExportRequestReconciler) SetupWithManager(mgr mctrl.Manager) error {
-	return mctrl.NewControllerManagedBy(mgr).
-		For(&kubebindv1alpha1.APIServiceExportRequest{}).
-		Named("kube-bind-apiserviceexportrequest").
-		Complete(r)
+		// TODO if consumer and provider are on different clusters need
+		// a way to get the cluster from the ExportRequest and store it in the
+		// Export?
+		if err := rCtx.Client.DeleteAllOf(ctx, &kubebindv1alpha1.APIServiceExport{},
+			client.InNamespace(rCtx.Request.Namespace),
+			client.MatchingFields{"metadata.name": rCtx.Request.Name}, // TODO most definitely not correct
+		); err != nil {
+			log.Error(err, "Failed to delete APIServiceExport")
+			return err
+		}
+
+		return nil
+	}
+	return r
 }
