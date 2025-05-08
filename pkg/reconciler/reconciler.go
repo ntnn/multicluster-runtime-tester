@@ -29,10 +29,10 @@ type Reconciler[T client.Object] struct {
 	GetObject func() T
 
 	// Ensure is called when the object is created or updated.
-	Ensure func(context.Context, ReconcilerContext[T]) error
+	Ensure func(context.Context, ReconcilerContext[T]) (mctrl.Result, error)
 
 	// Delete is triggered when an object is marked for deletion.
-	Delete func(context.Context, ReconcilerContext[T]) error
+	Delete func(context.Context, ReconcilerContext[T]) (mctrl.Result, error)
 
 	Manager mctrl.Manager
 }
@@ -143,10 +143,11 @@ func (r *Reconciler[T]) Reconcile(ctx context.Context, req mctrl.Request) (mctrl
 
 		if r.Delete != nil {
 			log.Info("Deleting object")
-			if err := r.Delete(ctx, rCtx); err != nil {
-				log.Error(err, "Failed to finalize object")
-				return mctrl.Result{Requeue: true}, err
+			result, err := r.Delete(ctx, rCtx)
+			if err != nil {
+				log.Error(err, "Failed to run deletion")
 			}
+			return result, err
 		}
 
 		log.Info("Removing finalizer")
@@ -177,10 +178,11 @@ func (r *Reconciler[T]) Reconcile(ctx context.Context, req mctrl.Request) (mctrl
 
 	if r.Ensure != nil {
 		log.Info("Ensuring object")
-		if err := r.Ensure(ctx, rCtx); err != nil {
+		result, err := r.Ensure(ctx, rCtx)
+		if err != nil {
 			log.Error(err, "Failed to ensure object")
-			return mctrl.Result{Requeue: true}, err
 		}
+		return result, err
 	}
 
 	return mctrl.Result{}, nil

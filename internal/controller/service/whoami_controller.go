@@ -22,6 +22,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -44,34 +45,37 @@ func NewWhoamiReconciler() *reconciler.Reconciler[*servicev1alpha1.Whoami] {
 	r.GetObject = func() *servicev1alpha1.Whoami {
 		return &servicev1alpha1.Whoami{}
 	}
-	r.Ensure = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*servicev1alpha1.Whoami]) error {
+	r.Ensure = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*servicev1alpha1.Whoami]) (mctrl.Result, error) {
 		log := logf.FromContext(ctx)
 		log.Info("Creating Whoami")
+		var result mctrl.Result
 		var errs error
 		for _, obj := range GenWhoamiResources(rCtx.Request) {
 			if err := r.Upsert(ctx, rCtx.Client, obj); err != nil {
 				log.Error(err, "Failed to upsert Whoami resource", "resource", obj)
+				result.Requeue = true
 				errs = errors.Join(errs, err)
 			}
 		}
-		return errs
+		return result, errs
 	}
-	r.Delete = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*servicev1alpha1.Whoami]) error {
+	r.Delete = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*servicev1alpha1.Whoami]) (mctrl.Result, error) {
 		log := logf.FromContext(ctx)
 		log.Info("Deleting Whoami")
 
+		var result mctrl.Result
 		var errs error
 		for _, resource := range usedResourceTypes {
 			if err := rCtx.Client.DeleteAllOf(ctx, resource,
 				client.InNamespace(rCtx.Request.Namespace),
 				client.MatchingLabels{"whoami": rCtx.Request.Name},
-			); err != nil {
+			); err != nil && !apierrors.IsNotFound(err) {
 				log.Error(err, "Failed to delete Whoami resources", "resource", resource)
+				result.Requeue = true
 				err = errors.Join(errs, err)
 			}
 		}
-		return errs
-
+		return result, errs
 	}
 	return r
 }

@@ -19,9 +19,11 @@ package kubebind
 import (
 	"context"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	mctrl "sigs.k8s.io/multicluster-runtime"
 
 	kubebindv1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/kube-bind/v1alpha1"
 	"github.com/ntnn/multicluster-runtime-tester/pkg/reconciler"
@@ -36,7 +38,7 @@ func NewAPIServiceExportRequestReconciler() *reconciler.Reconciler[*kubebindv1al
 	r.GetObject = func() *kubebindv1alpha1.APIServiceExportRequest {
 		return &kubebindv1alpha1.APIServiceExportRequest{}
 	}
-	r.Ensure = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) error {
+	r.Ensure = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) (mctrl.Result, error) {
 		log := logf.FromContext(ctx)
 		log.Info("Ensuring APIServiceExport")
 
@@ -60,9 +62,14 @@ func NewAPIServiceExportRequestReconciler() *reconciler.Reconciler[*kubebindv1al
 		// TODO if consumer and provider are on different clusters need
 		// a way to get the cluster from the ExportRequest and store it in the
 		// Export?
-		return r.Upsert(ctx, rCtx.Client, obj)
+		var result mctrl.Result
+		err := r.Upsert(ctx, rCtx.Client, obj)
+		if err != nil {
+			result.Requeue = true
+		}
+		return result, err
 	}
-	r.Delete = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) error {
+	r.Delete = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) (mctrl.Result, error) {
 		log := logf.FromContext(ctx)
 		log.Info("Deleting APIServiceExport")
 
@@ -72,12 +79,12 @@ func NewAPIServiceExportRequestReconciler() *reconciler.Reconciler[*kubebindv1al
 		if err := rCtx.Client.DeleteAllOf(ctx, &kubebindv1alpha1.APIServiceExport{},
 			client.InNamespace(rCtx.Request.Namespace),
 			client.MatchingFields{"metadata.name": rCtx.Request.Name}, // TODO most definitely not correct
-		); err != nil {
+		); err != nil && !apierrors.IsNotFound(err) {
 			log.Error(err, "Failed to delete APIServiceExport")
-			return err
+			return mctrl.Result{Requeue: true}, err
 		}
 
-		return nil
+		return mctrl.Result{}, nil
 	}
 	return r
 }
