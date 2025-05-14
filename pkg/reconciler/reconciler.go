@@ -101,10 +101,7 @@ func (r *Reconciler[T]) SetupWithManager(mgr mctrl.Manager) error {
 				UpdateFunc: func(e event.UpdateEvent) bool {
 					locked, byMe := r.LockedByMe(e.ObjectNew)
 					if locked {
-						if byMe {
-							return true
-						}
-						return false
+						return byMe
 					}
 
 					newObj := e.ObjectNew.DeepCopyObject().(T)
