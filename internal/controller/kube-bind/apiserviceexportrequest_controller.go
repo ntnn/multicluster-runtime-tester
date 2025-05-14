@@ -19,10 +19,6 @@ package kubebind
 import (
 	"context"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	mctrl "sigs.k8s.io/multicluster-runtime"
 
 	kubebindv1alpha1 "github.com/ntnn/multicluster-runtime-tester/api/kube-bind/v1alpha1"
@@ -39,52 +35,57 @@ func NewAPIServiceExportRequestReconciler() *reconciler.Reconciler[*kubebindv1al
 		return &kubebindv1alpha1.APIServiceExportRequest{}
 	}
 	r.Ensure = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) (mctrl.Result, error) {
-		log := logf.FromContext(ctx)
-		log.Info("Ensuring APIServiceExport")
+		return mctrl.Result{}, nil
 
-		obj := &kubebindv1alpha1.APIServiceExport{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: rCtx.Request.Name,
-				// TODO should be the provider namespace, though
-				// I believe the APIServiceExportRequest should be on
-				// the consumer side
-				Namespace: rCtx.Request.Namespace,
-			},
-			Spec: kubebindv1alpha1.APIServiceExportSpec{
-				Target: kubebindv1alpha1.ExportTarget{
-					Cluster:   rCtx.Request.ClusterName,
-					Namespace: rCtx.Request.Namespace,
-				},
-				Resources: rCtx.Object.Spec.Resources,
-			},
-		}
-
-		// TODO if consumer and provider are on different clusters need
-		// a way to get the cluster from the ExportRequest and store it in the
-		// Export?
-		var result mctrl.Result
-		err := r.Upsert(ctx, rCtx.Client, obj)
-		if err != nil {
-			result.Requeue = true
-		}
-		return result, err
+		// log := logf.FromContext(ctx)
+		// log.Info("Ensuring APIServiceExport")
+		//
+		// obj := &kubebindv1alpha1.APIServiceExport{
+		// 	ObjectMeta: metav1.ObjectMeta{
+		// 		Name: rCtx.Request.Name,
+		// 		// TODO should be the provider namespace, though
+		// 		// I believe the APIServiceExportRequest should be on
+		// 		// the consumer side
+		// 		Namespace: rCtx.Request.Namespace,
+		// 	},
+		// 	Spec: kubebindv1alpha1.APIServiceExportSpec{
+		// 		Target: kubebindv1alpha1.ExportTarget{
+		// 			Cluster:   rCtx.Request.ClusterName,
+		// 			Namespace: rCtx.Request.Namespace,
+		// 		},
+		// 		Resources: rCtx.Object.Spec.Resources,
+		// 	},
+		// }
+		//
+		// // TODO if consumer and provider are on different clusters need
+		// // a way to get the cluster from the ExportRequest and store it in the
+		// // Export?
+		// var result mctrl.Result
+		// err := r.Upsert(ctx, rCtx.Client, obj)
+		// if err != nil {
+		// 	log.Error(err, "Failed to upsert APIServiceExport")
+		// 	result.Requeue = true
+		// }
+		// return result, err
 	}
 	r.Delete = func(ctx context.Context, rCtx reconciler.ReconcilerContext[*kubebindv1alpha1.APIServiceExportRequest]) (mctrl.Result, error) {
-		log := logf.FromContext(ctx)
-		log.Info("Deleting APIServiceExport")
-
-		// TODO if consumer and provider are on different clusters need
-		// a way to get the cluster from the ExportRequest and store it in the
-		// Export?
-		if err := rCtx.Client.DeleteAllOf(ctx, &kubebindv1alpha1.APIServiceExport{},
-			client.InNamespace(rCtx.Request.Namespace),
-			client.MatchingFields{"metadata.name": rCtx.Request.Name}, // TODO most definitely not correct
-		); err != nil && !apierrors.IsNotFound(err) {
-			log.Error(err, "Failed to delete APIServiceExport")
-			return mctrl.Result{Requeue: true}, err
-		}
 
 		return mctrl.Result{}, nil
+		// log := logf.FromContext(ctx)
+		// log.Info("Deleting APIServiceExport")
+		//
+		// // TODO if consumer and provider are on different clusters need
+		// // a way to get the cluster from the ExportRequest and store it in the
+		// // Export?
+		// if err := rCtx.Client.DeleteAllOf(ctx, &kubebindv1alpha1.APIServiceExport{},
+		// 	client.InNamespace(rCtx.Request.Namespace),
+		// 	client.MatchingFields{"metadata.name": rCtx.Request.Name}, // TODO most definitely not correct
+		// ); err != nil && !apierrors.IsNotFound(err) {
+		// 	log.Error(err, "Failed to delete APIServiceExport")
+		// 	return mctrl.Result{Requeue: true}, err
+		// }
+		//
+		// return mctrl.Result{}, nil
 	}
 	return r
 }
