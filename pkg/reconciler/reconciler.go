@@ -3,11 +3,14 @@ package reconciler
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	mctrl "sigs.k8s.io/multicluster-runtime"
 
 	"github.com/google/uuid"
@@ -15,9 +18,12 @@ import (
 
 type ReconcilerContext[T client.Object] struct {
 	Manager mctrl.Manager
+	// TODO maybe rename for disambiguation as this should be the client
+	// for the cluster of the resource that triggered the reconciliation
 	Client  client.Client
 	Request mctrl.Request
-	Object  T
+	// TODO drop, replace with GetFilledObject (e.g.)
+	Object T
 }
 
 type Reconciler[T client.Object] struct {
@@ -55,6 +61,23 @@ func (r Reconciler[T]) LockingAnnotation() string {
 	return LockedByControllerPrefix + "-" + r.Name()
 }
 
+func (r *Reconciler[T]) LockedByMe(obj client.Object) (bool, bool) {
+	add := obj.GetAnnotations()
+	currentLock, ok := add[r.LockingAnnotation()]
+	if !ok {
+		// Object is not locked
+		return false, false
+	}
+
+	if currentLock == r.uid {
+		// Object is locked by current controller
+		return true, true
+	}
+
+	// Object is locked by another controller
+	return true, false
+}
+
 func (r *Reconciler[T]) SetupWithManager(mgr mctrl.Manager) error {
 	if r.Manager != nil {
 		return fmt.Errorf("manager already set")
@@ -63,12 +86,68 @@ func (r *Reconciler[T]) SetupWithManager(mgr mctrl.Manager) error {
 	r.Manager = mgr
 	return mctrl.NewControllerManagedBy(mgr).
 		For(r.GetObject()).
+		WithEventFilter(
+			predicate.Funcs{
+				CreateFunc: func(e event.CreateEvent) bool {
+					return true
+				},
+				DeleteFunc: func(e event.DeleteEvent) bool {
+					locked, byMe := r.LockedByMe(e.Object)
+					if !locked {
+						return true
+					}
+					return byMe
+				},
+				UpdateFunc: func(e event.UpdateEvent) bool {
+					locked, byMe := r.LockedByMe(e.ObjectNew)
+					if locked {
+						if byMe {
+							return true
+						}
+						return false
+					}
+
+					newObj := e.ObjectNew.DeepCopyObject().(T)
+					newAnns := newObj.GetAnnotations()
+					delete(newAnns, r.LockingAnnotation())
+					newObj.SetAnnotations(newAnns)
+					newObj.SetManagedFields(nil)
+					newObj.SetResourceVersion("")
+
+					oldObj := e.ObjectOld.DeepCopyObject().(T)
+					oldAnns := oldObj.GetAnnotations()
+					delete(oldAnns, r.LockingAnnotation())
+					oldObj.SetAnnotations(oldAnns)
+					oldObj.SetManagedFields(nil)
+					oldObj.SetResourceVersion("")
+
+					// Ignore updates to the locking annotation
+					// otherwise
+					// TODO i'm sure theres a better option
+					return !reflect.DeepEqual(oldObj, newObj)
+				},
+				GenericFunc: func(e event.GenericEvent) bool {
+					locked, byMe := r.LockedByMe(e.Object)
+					if !locked {
+						return true
+					}
+					return byMe
+				},
+			},
+		).
 		Named(r.Name()).
 		Complete(r)
 }
 
+func (r *Reconciler[T]) GetFilledObject(ctx context.Context, rCtx ReconcilerContext[T]) (T, error) {
+	obj := r.GetObject()
+	if err := rCtx.Client.Get(ctx, rCtx.Request.NamespacedName, obj); err != nil {
+		return *new(T), err
+	}
+	return obj, nil
+}
+
 func (r *Reconciler[T]) Upsert(ctx context.Context, cl client.Client, obj client.Object) error {
-	// TODO set owner ?
 	if err := cl.Get(ctx, client.ObjectKeyFromObject(obj), obj); err != nil {
 		if apierrors.IsNotFound(err) {
 			return cl.Create(ctx, obj)
@@ -78,8 +157,44 @@ func (r *Reconciler[T]) Upsert(ctx context.Context, cl client.Client, obj client
 	return cl.Update(ctx, obj)
 }
 
+func (r *Reconciler[T]) SetLockingAnnotaiton(ctx context.Context, rCtx ReconcilerContext[T]) (bool, error) {
+	// TODO logging
+	obj, err := r.GetFilledObject(ctx, rCtx)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		return true, err
+	}
+
+	patch := client.MergeFrom(obj.DeepCopyObject().(T))
+
+	ann := obj.GetAnnotations()
+	ann[r.LockingAnnotation()] = r.uid
+	obj.SetAnnotations(ann)
+
+	return true, rCtx.Client.Patch(ctx, obj, patch)
+}
+
+func (r *Reconciler[T]) RemoveLockingAnnotaiton(ctx context.Context, rCtx ReconcilerContext[T]) {
+	// TODO logging
+	obj, err := r.GetFilledObject(ctx, rCtx)
+	if err != nil {
+		return
+	}
+
+	patch := client.MergeFrom(obj.DeepCopyObject().(T))
+
+	ann := obj.GetAnnotations()
+	delete(ann, r.LockingAnnotation())
+	obj.SetAnnotations(ann)
+
+	// TODO log error
+	rCtx.Client.Patch(ctx, obj, patch)
+}
+
 func (r *Reconciler[T]) Reconcile(ctx context.Context, req mctrl.Request) (mctrl.Result, error) {
-	log := logf.FromContext(ctx).WithValues("cluster", req.ClusterName, "namespace", req.Namespace, "name", req.Name)
+	log := logf.FromContext(ctx).WithValues("cluster", req.ClusterName, "namespace", req.Namespace, "name", req.Name, "reconciler", r.uid)
 	log.Info("Reconciling " + r.Name())
 
 	cluster, err := r.Manager.GetCluster(ctx, req.ClusterName)
@@ -104,53 +219,51 @@ func (r *Reconciler[T]) Reconcile(ctx context.Context, req mctrl.Request) (mctrl
 		Object:  obj,
 	}
 
-	// TODO lock object
-
-	if lockingController, ok := obj.GetAnnotations()[r.LockingAnnotation()]; ok && lockingController != r.Name() {
-		// Object is locked by another controller,
-		return mctrl.Result{}, nil
-	}
-
 	annotations := obj.GetAnnotations()
 	if annotations == nil {
 		annotations = map[string]string{}
 	}
-	annotations[r.LockingAnnotation()] = r.Name()
-	obj.SetAnnotations(annotations)
-	log.Info("Setting locking annotation")
-	if err := r.Upsert(ctx, cl, obj); err != nil {
-		log.Error(err, "Failed to set locking annotation")
-		return mctrl.Result{Requeue: true}, err
+	lockingController, ok := annotations[r.LockingAnnotation()]
+	if !ok {
+		log.Info("Object is not locked, setting locking annotation")
+		requeue, err := r.SetLockingAnnotaiton(ctx, rCtx)
+		if err != nil {
+			log.Error(err, "Failed to set locking annotation")
+			return mctrl.Result{Requeue: true}, err
+		}
+		if requeue {
+			log.Info("Requeueing after setting locking annotation")
+			return mctrl.Result{Requeue: true}, nil
+		}
 	}
 
-	defer func() {
-		// TODO this could turn into a dead lock if removing the locking
-		// annotation fails
-		annotations := obj.GetAnnotations()
-		delete(annotations, r.LockingAnnotation())
-		obj.SetAnnotations(annotations)
-		log.Info("Removing locking annotation")
-		// Ignore IsNotFound error, as the object may have been deleted
-		if err := r.Upsert(ctx, cl, obj); err != nil && !apierrors.IsNotFound(err) {
-			// TODO this errors with "resourceVersion should not be set on
-			// objects to be created"
-			log.Error(err, "Failed to remove locking annotation")
-		}
-	}()
+	log.Info("Checking locking annotation")
+	if lockingController != r.uid {
+		log.Info("Object is locked by another controller, skipping")
+		return mctrl.Result{}, nil
+	}
+
+	defer r.RemoveLockingAnnotaiton(ctx, rCtx)
+
+	log.Info("Proceeding with reconciliation")
 
 	if obj.GetDeletionTimestamp() != nil {
 		log.Info("Object is being deleted, finalizing")
 
+		var result mctrl.Result
+
 		if r.Delete != nil {
-			log.Info("Deleting object")
-			result, err := r.Delete(ctx, rCtx)
+			log.Info("Running deletion")
+			var err error
+			result, err = r.Delete(ctx, rCtx)
 			if err != nil {
 				log.Error(err, "Failed to run deletion")
+				return result, err
 			}
-			return result, err
 		}
 
 		log.Info("Removing finalizer")
+		patch := client.MergeFrom(obj.DeepCopyObject().(T))
 		obj.SetFinalizers(
 			slices.DeleteFunc(
 				obj.GetFinalizers(),
@@ -159,21 +272,22 @@ func (r *Reconciler[T]) Reconcile(ctx context.Context, req mctrl.Request) (mctrl
 				},
 			),
 		)
-		if err := cl.Update(ctx, obj); err != nil {
+		if err := cl.Patch(ctx, obj, patch); err != nil && !apierrors.IsNotFound(err) {
 			log.Error(err, "Failed to remove finalizer")
 			return mctrl.Result{Requeue: true}, err
 		}
-
-		return mctrl.Result{}, nil
+		return result, nil
 	}
 
 	if !slices.Contains(obj.GetFinalizers(), r.Name()) {
 		log.Info("Adding finalizer")
+		patch := client.MergeFrom(obj.DeepCopyObject().(T))
 		obj.SetFinalizers(append(obj.GetFinalizers(), r.Name()))
-		if err := cl.Update(ctx, obj); err != nil {
+		if err := cl.Patch(ctx, obj, patch); err != nil {
 			log.Error(err, "Failed to add finalizer")
 			return mctrl.Result{Requeue: true}, err
 		}
+		return mctrl.Result{Requeue: true}, nil
 	}
 
 	if r.Ensure != nil {
